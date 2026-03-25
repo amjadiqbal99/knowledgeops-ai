@@ -29,13 +29,23 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
-            <div className="flex h-16 items-center gap-4 px-4 lg:px-8">
-              <WorkspaceSwitcher />
-              <form action="/search" className="relative flex-1 max-w-xl">
-                <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <Input name="query" placeholder="Search documents, workflows, QA logs, users..." className="pl-9" />
-              </form>
-              <UserNav user={session.user} />
+            <div className="flex h-16 items-center px-4 lg:px-8">
+              <div className="flex min-w-0 flex-1 items-center gap-4">
+                <div className="shrink-0">
+                  <WorkspaceSwitcher />
+                </div>
+                <form action="/search" className="relative hidden max-w-xl flex-1 md:block">
+                  <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    name="query"
+                    placeholder="Search documents, workflows, QA logs, users..."
+                    className="pl-9"
+                  />
+                </form>
+              </div>
+              <div className="ml-auto flex shrink-0 items-center">
+                <UserNav user={session.user} />
+              </div>
             </div>
           </header>
           <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
