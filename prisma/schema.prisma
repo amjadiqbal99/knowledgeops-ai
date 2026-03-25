@@ -1,0 +1,332 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  TEAM_MEMBER
+  REVIEWER
+}
+
+enum KnowledgeSourceType {
+  MANUAL
+  MARKDOWN
+  PDF
+  LINK
+  IMPORTED
+}
+
+enum KnowledgeCategory {
+  STRATEGY
+  SOP
+  TRAINING
+  BRAND_VOICE
+  PROCESS_RULES
+  MEMBER_SUPPORT
+  CURRICULUM
+  LEADERSHIP_NOTES
+}
+
+enum KnowledgeStatus {
+  GOLD_STANDARD
+  CURRENT
+  DRAFT
+  LEGACY_NOISE
+  ARCHIVED
+}
+
+enum AuthorityLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum WorkflowType {
+  STRATEGIC_GUIDANCE
+  TEAM_EXECUTION
+  DRAFTING_SUPPORT
+  PROCESS_QA
+}
+
+enum DraftType {
+  INTERNAL_MEMO
+  SOP_REWRITE
+  TEAM_BRIEF
+  MEMBER_RESPONSE
+  STRATEGY_SUMMARY
+  CHECKLIST
+  QA_REVIEW_NOTES
+}
+
+enum QAIssueType {
+  HALLUCINATION
+  WEAK_GROUNDING
+  MISSING_INSTRUCTION
+  POOR_FORMATTING
+  WRONG_TONE
+  INCOMPLETE_ANSWER
+  OUTDATED_SOURCE_USAGE
+}
+
+enum QASeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum QAReviewerStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum ActivityType {
+  DOCUMENT_CREATED
+  DOCUMENT_UPDATED
+  DOCUMENT_STATUS_CHANGED
+  WORKFLOW_CREATED
+  WORKFLOW_RUN
+  QA_ISSUE_LOGGED
+  REVIEW_COMPLETED
+  DRAFT_CREATED
+  INTEGRATION_UPDATED
+  USER_UPDATED
+}
+
+enum IntegrationProvider {
+  CLAUDE
+  GOOGLE_DRIVE
+  CLICKUP
+  SLACK
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  passwordHash   String
+  role           Role
+  title          String?
+  department     String?
+  image          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  workflowRuns   WorkflowRun[]
+  drafts         Draft[]
+  qaRecords      QARecord[]     @relation("QARecordAuthor")
+  reviews        QARecord[]     @relation("QARecordReviewer")
+  activities     ActivityLog[]
+  knowledgeOwned KnowledgeDocument[] @relation("KnowledgeOwner")
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model KnowledgeDocument {
+  id                 String              @id @default(cuid())
+  title              String
+  slug               String              @unique
+  description        String?
+  content            String
+  sourceType         KnowledgeSourceType
+  sourceUrl          String?
+  category           KnowledgeCategory
+  authorityLevel     AuthorityLevel
+  status             KnowledgeStatus
+  ownerId            String?
+  owner              User?               @relation("KnowledgeOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  department         String?
+  businessUnit       String?
+  companyArea        String?
+  version            String              @default("1.0")
+  effectiveDate      DateTime?
+  reviewDate         DateTime?
+  internalNotes      String?
+  rationale          String?
+  tags               KnowledgeTag[]      @relation("DocumentTags")
+  workflowLinks      WorkflowDocument[]
+  parentRelations    KnowledgeRelation[] @relation("ParentDocument")
+  childRelations     KnowledgeRelation[] @relation("ChildDocument")
+  workflowRuns       WorkflowRunDocument[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([status, category, authorityLevel])
+}
+
+model KnowledgeTag {
+  id        String              @id @default(cuid())
+  name      String              @unique
+  documents KnowledgeDocument[] @relation("DocumentTags")
+}
+
+model KnowledgeRelation {
+  id                 String            @id @default(cuid())
+  parentDocumentId   String
+  childDocumentId    String
+  relationType       String
+  businessUnit       String?
+  workflowRelevance  String?
+  roleRelevance      Role?
+  companyArea        String?
+  parentDocument     KnowledgeDocument @relation("ParentDocument", fields: [parentDocumentId], references: [id], onDelete: Cascade)
+  childDocument      KnowledgeDocument @relation("ChildDocument", fields: [childDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentDocumentId, childDocumentId])
+}
+
+model Workflow {
+  id                       String             @id @default(cuid())
+  name                     String
+  slug                     String             @unique
+  description              String
+  type                     WorkflowType
+  targetRole               Role
+  objective                String
+  inputFields              Json
+  recommendedCategories    KnowledgeCategory[]
+  instructionTemplate      String
+  guardrails               String
+  expectedOutputFormat     String
+  escalationRules          String
+  reviewChecklist          String
+  active                   Boolean            @default(true)
+  documents                WorkflowDocument[]
+  runs                     WorkflowRun[]
+  drafts                   Draft[]
+  qaRecords                QARecord[]
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+}
+
+model WorkflowDocument {
+  workflowId String
+  documentId String
+  workflow   Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([workflowId, documentId])
+}
+
+model WorkflowRun {
+  id                  String                @id @default(cuid())
+  workflowId          String
+  workflow            Workflow              @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskContext         String
+  compiledPrompt      String
+  compiledPayload     Json
+  status              String                @default("READY")
+  createdAt           DateTime              @default(now())
+  usedDocuments       WorkflowRunDocument[]
+}
+
+model WorkflowRunDocument {
+  workflowRunId String
+  documentId    String
+  authorityRank Int
+  workflowRun   WorkflowRun        @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  document      KnowledgeDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([workflowRunId, documentId])
+}
+
+model Draft {
+  id                String      @id @default(cuid())
+  title             String
+  draftType         DraftType
+  context           String
+  status            String      @default("DRAFT")
+  compiledRequest   String
+  workflowId        String
+  workflow          Workflow    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  authorId          String
+  author            User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  submittedAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model QARecord {
+  id                     String            @id @default(cuid())
+  workflowId             String
+  workflow               Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId                 String
+  user                   User              @relation("QARecordAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  reviewerId             String?
+  reviewer               User?             @relation("QARecordReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  scenario               String
+  expectedResult         String
+  actualResult           String
+  issueType              QAIssueType
+  severity               QASeverity
+  sourceGroundingIssue   Boolean           @default(false)
+  toneIssue              Boolean           @default(false)
+  complianceIssue        Boolean           @default(false)
+  notes                  String?
+  reviewerStatus         QAReviewerStatus  @default(OPEN)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+}
+
+model ActivityLog {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  message     String
+  metadata    Json?
+  actorId     String?
+  actor       User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+}
+
+model IntegrationConfig {
+  id          String              @id @default(cuid())
+  provider    IntegrationProvider @unique
+  enabled     Boolean             @default(false)
+  config      Json
+  status      String              @default("Not connected")
+  updatedAt   DateTime            @updatedAt
+}

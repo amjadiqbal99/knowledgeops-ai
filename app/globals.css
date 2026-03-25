@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 38 33% 98%;
+  --foreground: 220 19% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 19% 14%;
+  --primary: 213 53% 18%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 34 55% 94%;
+  --secondary-foreground: 220 19% 18%;
+  --muted: 35 30% 95%;
+  --muted-foreground: 220 10% 42%;
+  --accent: 28 50% 91%;
+  --accent-foreground: 220 19% 18%;
+  --destructive: 3 75% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 18% 88%;
+  --input: 30 18% 88%;
+  --ring: 213 53% 18%;
+  --radius: 0.9rem;
+  --font-sans: "Instrument Sans", "Segoe UI", sans-serif;
+}
+
+.dark {
+  --background: 220 22% 10%;
+  --foreground: 210 20% 96%;
+  --card: 220 20% 13%;
+  --card-foreground: 210 20% 96%;
+  --primary: 35 70% 85%;
+  --primary-foreground: 220 22% 10%;
+  --secondary: 220 17% 17%;
+  --secondary-foreground: 210 20% 96%;
+  --muted: 220 17% 17%;
+  --muted-foreground: 215 16% 72%;
+  --accent: 220 17% 17%;
+  --accent-foreground: 210 20% 96%;
+  --destructive: 3 75% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 14% 24%;
+  --input: 220 14% 24%;
+  --ring: 35 70% 85%;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+* {
+  @apply border-border;
+}
