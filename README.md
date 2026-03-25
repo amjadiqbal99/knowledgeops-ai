@@ -93,7 +93,7 @@ For local development, the app also falls back to a dev-only secret if neither e
 
 ## Seeded credentials
 
-- Admin: `alex@claudeopsos.com` / `Password123!`
+- Admin: `amjadiqbal@claudeopsos.com` / `Password123!`
 - Team Member: `jordan@claudeopsos.com` / `Password123!`
 - Reviewer: `priya@claudeopsos.com` / `Password123!`
 

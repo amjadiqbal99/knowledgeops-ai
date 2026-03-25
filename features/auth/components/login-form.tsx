@@ -30,7 +30,7 @@ export function LoginForm() {
         <form action={formAction} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
-            <Input name="email" type="email" placeholder="alex@claudeopsos.com" required />
+            <Input name="email" type="email" placeholder="amjadiqbal@claudeopsos.com" required />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Password</label>

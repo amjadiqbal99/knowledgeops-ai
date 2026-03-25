@@ -591,7 +591,7 @@ async function main() {
   });
 
   console.log("Seed complete.");
-  console.log("Admin: alex@claudeopsos.com / Password123!");
+  console.log("Admin: amjadiqbal@claudeopsos.com / Password123!");
   console.log("Team Member: jordan@claudeopsos.com / Password123!");
   console.log("Reviewer: priya@claudeopsos.com / Password123!");
 }
